@@ -1,13 +1,13 @@
 import { AppService } from './app.service';
 
 describe('AppService', () => {
-	let service: AppService;
+  let service: AppService;
 
-	beforeEach(() => {
-		service = new AppService();
-	});
+  beforeEach(() => {
+    service = new AppService();
+  });
 
-	test('hello world!', () => {
-		expect(service).toBeDefined();
-	});
+  test('hello world!', () => {
+    expect(service).toBeDefined();
+  });
 });

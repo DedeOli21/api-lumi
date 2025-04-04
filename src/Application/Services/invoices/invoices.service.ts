@@ -1,11 +1,17 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import pdf from 'pdf-parse';
 import { IInvoiceRepository } from 'src/Domain/Interfaces/invoice.repositories';
 import { InvoiceData } from 'src/Application/interfaces/invoice.interface';
 import { IClientRepository } from 'src/Domain/Interfaces/client.repositories';
 import { Invoice } from 'src/Domain/Entities/invoice.entity';
-import { extractInvoiceDataFromText, saveInvoicePdf } from 'src/Shared/Utils/text-match.helper';
-
+import {
+  extractInvoiceDataFromText,
+  saveInvoicePdf,
+} from 'src/Shared/Utils/text-match.helper';
 
 @Injectable()
 export class InvoicesService {
@@ -24,7 +30,9 @@ export class InvoicesService {
       return extractInvoiceDataFromText(text);
     } catch (error) {
       console.error('Error extracting data:', error.message);
-      throw new BadRequestException('Erro ao processar PDF: formato inválido ou dados faltantes');
+      throw new BadRequestException(
+        'Erro ao processar PDF: formato inválido ou dados faltantes',
+      );
     }
   }
 
@@ -35,7 +43,10 @@ export class InvoicesService {
       let client = await this.clientRepo.findByClientNumber(data.clientNumber);
 
       if (!client) {
-        client = await this.clientRepo.create(data.clientNumber, `Cliente ${data.clientNumber}`);
+        client = await this.clientRepo.create(
+          data.clientNumber,
+          `Cliente ${data.clientNumber}`,
+        );
       }
 
       const fullPath = await saveInvoicePdf(fileBuffer, data);
@@ -44,32 +55,36 @@ export class InvoicesService {
         ...data,
         clientId: client.id,
         pdfPath: fullPath,
-      }
-
+      };
 
       return this.invoiceRepo.create(payload);
-      } catch (error) {
-        console.error('Error processing PDF:', error);
-        throw new BadRequestException('Erro ao processar PDF: formato inválido ou dados faltantes');
-        
-      }
+    } catch (error) {
+      console.error('Error processing PDF:', error);
+      throw new BadRequestException(
+        'Erro ao processar PDF: formato inválido ou dados faltantes',
+      );
+    }
   }
 
   async findOne(id: number): Promise<Invoice> {
     const invoice = await this.invoiceRepo.findById(id);
-  
+
     if (!invoice) {
       throw new NotFoundException('Fatura não encontrada');
     }
-  
+
     if (!invoice.pdfPath) {
       throw new NotFoundException('Arquivo PDF da fatura não encontrado');
     }
-  
+
     return invoice;
   }
 
-  async findFiltered(clientId?: number, month?: string, year?: string): Promise<Invoice[]> {
+  async findFiltered(
+    clientId?: number,
+    month?: string,
+    year?: string,
+  ): Promise<Invoice[]> {
     return this.invoiceRepo.findFiltered(clientId, month, year);
   }
 
@@ -80,5 +95,4 @@ export class InvoicesService {
   async getAvailableMonths(year: string, clientId?: number): Promise<any> {
     return this.invoiceRepo.getAvailableMonths(year, clientId);
   }
-  
 }

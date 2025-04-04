@@ -1,11 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { InvoicesService } from './invoices.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Client } from '../entities/client.entity';
-import { Invoice } from '../entities/invoice.entity';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
 import pdf from 'pdf-parse';
 import { Repository } from 'typeorm';
+import { Client } from 'src/Domain/Entities/client.entity';
+import { Invoice } from 'src/Domain/Entities/invoice.entity';
 
 jest.mock('pdf-parse');
 
@@ -87,14 +87,18 @@ describe('InvoicesService', () => {
       const mockPdfBuffer = Buffer.from('mock-pdf');
       (pdf as jest.Mock).mockResolvedValue({ text: '' });
 
-      await expect(service.extractInvoiceData(mockPdfBuffer)).rejects.toThrow(BadRequestException);
+      await expect(service.extractInvoiceData(mockPdfBuffer)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
   describe('findFiltered', () => {
     it('should return filtered invoices', async () => {
       const mockInvoices = [{ id: 1 }, { id: 2 }];
-      mockInvoiceRepo.createQueryBuilder().getMany.mockResolvedValue(mockInvoices);
+      mockInvoiceRepo
+        .createQueryBuilder()
+        .getMany.mockResolvedValue(mockInvoices);
 
       const result = await service.findFiltered(1, '01', '2023');
 
@@ -117,7 +121,9 @@ describe('InvoicesService', () => {
       const mockClient = { id: 1, clientNumber: '1234567890' };
       const mockInvoice = { id: 1, ...mockInvoiceData };
 
-      jest.spyOn(service, 'extractInvoiceData').mockResolvedValue(mockInvoiceData);
+      jest
+        .spyOn(service, 'extractInvoiceData')
+        .mockResolvedValue(mockInvoiceData);
       mockClientRepo.findOne.mockResolvedValue(mockClient);
       mockInvoiceRepo.create.mockReturnValue(mockInvoice);
       mockInvoiceRepo.save.mockResolvedValue(mockInvoice);
@@ -126,7 +132,9 @@ describe('InvoicesService', () => {
 
       expect(result).toEqual(mockInvoice);
       expect(service.extractInvoiceData).toHaveBeenCalledWith(mockPdfBuffer);
-      expect(mockClientRepo.findOne).toHaveBeenCalledWith({ where: { clientNumber: '1234567890' } });
+      expect(mockClientRepo.findOne).toHaveBeenCalledWith({
+        where: { clientNumber: '1234567890' },
+      });
       expect(mockInvoiceRepo.create).toHaveBeenCalledWith({
         ...mockInvoiceData,
         clientId: mockClient.id,
@@ -137,9 +145,13 @@ describe('InvoicesService', () => {
 
     it('should throw BadRequestException for invalid PDF processing', async () => {
       const mockPdfBuffer = Buffer.from('mock-pdf');
-      jest.spyOn(service, 'extractInvoiceData').mockRejectedValue(new BadRequestException());
+      jest
+        .spyOn(service, 'extractInvoiceData')
+        .mockRejectedValue(new BadRequestException());
 
-      await expect(service.processAndSaveInvoice(mockPdfBuffer)).rejects.toThrow(BadRequestException);
+      await expect(
+        service.processAndSaveInvoice(mockPdfBuffer),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -151,7 +163,9 @@ describe('InvoicesService', () => {
       const result = await service.findOne(1);
 
       expect(result).toEqual(mockInvoice);
-      expect(mockInvoiceRepo.findOne).toHaveBeenCalledWith({ where: { id: 1 } });
+      expect(mockInvoiceRepo.findOne).toHaveBeenCalledWith({
+        where: { id: 1 },
+      });
     });
-  })
-})
+  });
+});

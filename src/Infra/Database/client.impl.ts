@@ -1,40 +1,42 @@
-import { InjectRepository } from "@nestjs/typeorm";
-import { Client } from "src/Domain/Entities/client.entity";
-import { IClientRepository } from "src/Domain/Interfaces/client.repositories";
-import { RequestClientDTO } from "src/Presentation/DTOs/request-cliente.dto";
-import { ResponseClientDTO } from "src/Presentation/DTOs/response-cliente.dto";
-import { Repository } from "typeorm";
+import { InjectRepository } from '@nestjs/typeorm';
+import { Client } from 'src/Domain/Entities/client.entity';
+import { IClientRepository } from 'src/Domain/Interfaces/client.repositories';
+import { RequestClientDTO } from 'src/Presentation/DTOs/request-cliente.dto';
+import { Repository } from 'typeorm';
 
 export class ClientImpl implements IClientRepository {
-    constructor(
-        @InjectRepository(Client)
-        private readonly clientRepository: Repository<Client>,
-    ) {}
+  constructor(
+    @InjectRepository(Client)
+    private readonly clientRepository: Repository<Client>,
+  ) {}
 
-    async findAll(filters: RequestClientDTO): Promise<Client[]> {
-        const { numberClient, clientName } = filters;
+  async findAll(filters: RequestClientDTO): Promise<Client[]> {
+    const { numberClient, clientName } = filters;
 
-        const query = this.clientRepository.createQueryBuilder("client")
-            .select(["client.clientNumber", "client.name"]);
+    const query = this.clientRepository
+      .createQueryBuilder('client')
+      .select(['client.clientNumber', 'client.name']);
 
-        if (numberClient) {
-            query.andWhere("client.clientNumber = :numberClient", { numberClient });
-        }
-        if (clientName) {
-            query.andWhere("client.name LIKE :clientName", { clientName: `%${clientName}%` });
-        }
-        return query.getMany();
+    if (numberClient) {
+      query.andWhere('client.clientNumber = :numberClient', { numberClient });
     }
-
-    async findByClientNumber(clientNumber: string): Promise<Client | null> {
-        return this.clientRepository.findOne({ where: { clientNumber } });
+    if (clientName) {
+      query.andWhere('client.name LIKE :clientName', {
+        clientName: `%${clientName}%`,
+      });
     }
+    return query.getMany();
+  }
 
-    async create(clientNumber: string, name: string): Promise<Client> {
-        const newClient = this.clientRepository.create({
-            clientNumber,
-            name,
-          });
-        return this.clientRepository.save(newClient);
-    }
+  async findByClientNumber(clientNumber: string): Promise<Client | null> {
+    return this.clientRepository.findOne({ where: { clientNumber } });
+  }
+
+  async create(clientNumber: string, name: string): Promise<Client> {
+    const newClient = this.clientRepository.create({
+      clientNumber,
+      name,
+    });
+    return this.clientRepository.save(newClient);
+  }
 }

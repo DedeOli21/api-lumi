@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ClientsController } from '../../../Presentation/Controllers/clients.controller';
-import { ClientsService } from './clients.service';
-import { Client } from '../entities/client.entity';
+import { ClientsService } from 'src/Application/Services/clients/clients.service';
+import { ClientsController } from 'src/Presentation/Controllers/clients.controller';
 
 describe('ClientsController', () => {
   let controller: ClientsController;
@@ -33,12 +32,12 @@ describe('ClientsController', () => {
 
   describe('findAll', () => {
     it('should return an array of clients', async () => {
-      const result: Client[] = await controller.findAll();
+      const result = await controller.findAll('1', 'Client 1');
       expect(result).toEqual([
-        { id: 1, name: 'Client 1' },
-        { id: 2, name: 'Client 2' },
+        { id: 1, name: 'Client 1', invoices: [] },
+        { id: 2, name: 'Client 2', invoices: [] },
       ]);
-      expect(service.findAll).toHaveBeenCalled();
+      expect(service.findAllClient).toHaveBeenCalled();
     });
   });
 });

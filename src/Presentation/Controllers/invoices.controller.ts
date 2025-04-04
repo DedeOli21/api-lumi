@@ -1,4 +1,14 @@
-import { Controller, Get, Query, Post, UploadedFile, UseInterceptors, Param, Res, NotFoundException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Query,
+  Post,
+  UploadedFile,
+  UseInterceptors,
+  Param,
+  Res,
+  NotFoundException,
+} from '@nestjs/common';
 import { InvoicesService } from '../../Application/Services/invoices/invoices.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
@@ -45,18 +55,24 @@ export class InvoicesController {
 
     const fileStream = createReadStream(filePath);
     fileStream.pipe(res);
-}
+  }
 
   @Get('years')
   async findYears(): Promise<string[]> {
     const result = await this.invoicesService.getAvailableYears();
     console.log('Available years:', result);
-    return result.map(r => r.monthReference);
+    return result.map((r) => r.monthReference);
   }
 
   @Get('months')
-  async findMonths(@Query('year') year: string, @Query('client_id') clientId?: number): Promise<string[]> {
-    const result = await this.invoicesService.getAvailableMonths(year, clientId);
-    return result.map(r => r.monthReference);
+  async findMonths(
+    @Query('year') year: string,
+    @Query('client_id') clientId?: number,
+  ): Promise<string[]> {
+    const result = await this.invoicesService.getAvailableMonths(
+      year,
+      clientId,
+    );
+    return result.map((r) => r.monthReference);
   }
 }

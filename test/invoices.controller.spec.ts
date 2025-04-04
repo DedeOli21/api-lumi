@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { InvoicesController } from '../../../Presentation/Controllers/invoices.controller';
-import { InvoicesService } from './invoices.service';
 import { NotFoundException } from '@nestjs/common';
 import { Response } from 'express';
+import { InvoicesController } from 'src/Presentation/Controllers/invoices.controller';
+import { InvoicesService } from 'src/Application/Services/invoices/invoices.service';
 
 describe('InvoicesController', () => {
   let controller: InvoicesController;
@@ -15,8 +15,12 @@ describe('InvoicesController', () => {
     ]),
     processAndSaveInvoice: jest.fn().mockResolvedValue({ success: true }),
     findOne: jest.fn() as jest.Mock,
-    getAvailableYears: jest.fn().mockResolvedValue([{ monthReference: '2023' }]),
-    getAvailableMonths: jest.fn().mockResolvedValue([{ monthReference: 'January' }]),
+    getAvailableYears: jest
+      .fn()
+      .mockResolvedValue([{ monthReference: '2023' }]),
+    getAvailableMonths: jest
+      .fn()
+      .mockResolvedValue([{ monthReference: 'January' }]),
   };
 
   beforeEach(async () => {
@@ -54,7 +58,9 @@ describe('InvoicesController', () => {
       const mockFile = { buffer: Buffer.from('test') } as Express.Multer.File;
       const result = await controller.upload(mockFile);
       expect(result).toEqual({ success: true });
-      expect(service.processAndSaveInvoice).toHaveBeenCalledWith(mockFile.buffer);
+      expect(service.processAndSaveInvoice).toHaveBeenCalledWith(
+        mockFile.buffer,
+      );
     });
   });
 
@@ -63,7 +69,9 @@ describe('InvoicesController', () => {
       (service.findOne as jest.Mock).mockResolvedValue(null);
       const mockRes = {} as Response;
 
-      await expect(controller.downloadInvoice(1, mockRes)).rejects.toThrow(NotFoundException);
+      await expect(controller.downloadInvoice(1, mockRes)).rejects.toThrow(
+        NotFoundException,
+      );
       expect(service.findOne).toHaveBeenCalledWith(1);
     });
   });

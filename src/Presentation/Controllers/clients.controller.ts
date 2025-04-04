@@ -11,6 +11,6 @@ export class ClientsController {
     @Query('number_client') numberClient: string,
     @Query('client_name') clientName: string,
   ): Promise<ResponseClientDTO[]> {
-    return this.clientsService.findAllClient({numberClient, clientName});
+    return this.clientsService.findAllClient({ numberClient, clientName });
   }
 }
