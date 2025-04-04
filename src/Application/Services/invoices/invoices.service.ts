@@ -17,7 +17,6 @@ import {
 export class InvoicesService {
   constructor(
     private clientRepo: IClientRepository,
-
     private invoiceRepo: IInvoiceRepository,
   ) {}
 

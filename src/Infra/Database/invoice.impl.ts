@@ -1,6 +1,7 @@
 import { InjectRepository } from '@nestjs/typeorm';
 import { Invoice } from 'src/Domain/Entities/invoice.entity';
 import { IInvoiceRepository } from 'src/Domain/Interfaces/invoice.repositories';
+import { getMonthName } from 'src/Shared/Utils/get-month.helpert';
 import { Repository } from 'typeorm';
 
 export class InvoiceImpl implements IInvoiceRepository {
@@ -54,36 +55,10 @@ export class InvoiceImpl implements IInvoiceRepository {
     month?: string,
     year?: string,
   ): Promise<Invoice[]> {
-    // converter month e year para o formato ex: "JAN/2024 atualmente estou recebendo year como "2024" e month como "02"
-
-    // se o mês for 02, converta para "FEV" ou qualquer outro mes que você queira
 
     if (month) {
-      const monthMap: { [key: string]: string } = {
-        '01': 'JAN',
-        '02': 'FEV',
-        '03': 'MAR',
-        '04': 'ABR',
-        '05': 'MAI',
-        '06': 'JUN',
-        '07': 'JUL',
-        '08': 'AGO',
-        '09': 'SET',
-        '10': 'OUT',
-        '11': 'NOV',
-        '12': 'DEZ',
-      };
-      month = monthMap[month] || month;
+       month = getMonthName(month);
     }
-
-    console.log(
-      'findFiltered called with clientId:',
-      clientId,
-      'month:',
-      month,
-      'year:',
-      year,
-    );
     const query = this.invoiceRepo
       .createQueryBuilder('invoice')
       .leftJoinAndSelect('invoice.client', 'client');
