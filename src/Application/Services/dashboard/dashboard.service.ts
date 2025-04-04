@@ -1,20 +1,17 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Invoice } from "src/entities/invoice.entity";
+import { Invoice } from "src/Domain/Entities/invoice.entity";
+import { IInvoiceRepository } from "src/Domain/Interfaces/invoice.repositories";
 import { Repository } from "typeorm";
 
 @Injectable()
 export class DashboardService {
     constructor(
-        @InjectRepository(Invoice)
-        private invoiceRepo: Repository<Invoice>,
+        private invoiceRepo: IInvoiceRepository,
     ) {}
 
     async getDashboard(clientId: number) {
-        const invoices = await this.invoiceRepo.find({
-          where: { client: { id: clientId } },
-          order: { monthReference: 'ASC' },
-        });
+        const invoices = await this.invoiceRepo.findByClientId(clientId);
       
         const summary = {
           totalKwh: 0,

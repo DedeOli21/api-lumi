@@ -1,10 +1,10 @@
 import { Controller, Get, Query, Post, UploadedFile, UseInterceptors, Param, Res, NotFoundException } from '@nestjs/common';
-import { InvoicesService } from './invoices.service';
+import { InvoicesService } from '../../Application/Services/invoices/invoices.service';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { Invoice } from '../entities/invoice.entity';
 import { Response } from 'express';
 import { createReadStream } from 'fs';
 import * as path from 'path';
+import { Invoice } from 'src/Domain/Entities/invoice.entity';
 
 @Controller('invoices')
 export class InvoicesController {

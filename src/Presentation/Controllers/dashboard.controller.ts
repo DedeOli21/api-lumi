@@ -1,7 +1,5 @@
 import { Controller, Get, Query, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { Invoice } from '../entities/invoice.entity';
-import { DashboardService } from './dashboard.service';
+import { DashboardService } from '../../Application/Services/dashboard/dashboard.service';
 
 @Controller('dashboard')
 export class DashboardController {

@@ -1,33 +1,24 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { Client } from './entities/client.entity';
-import { Invoice } from './entities/invoice.entity';
-import { InvoicesModule } from './invoices/invoices.module';
-import { ClientsModule } from './clients/clients.module';
-import { DashBoardModule } from './dashboard/dashboard.module';
+import { Client } from './Domain/Entities/client.entity';
+import { Invoice } from './Domain/Entities/invoice.entity';
+import { DatabaseModule } from './Infra/Database/database.module';
+import { ApplicationModule } from './Application/application.module';
+import { PresentationModule } from './Presentation/presentation.module';
+import { DataBaseConnectionService } from './Infra/Configurations/databaseConnectionService';
+
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
     TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: async (config: ConfigService) => ({
-        type: 'postgres',
-        host: config.get('DATABASE_HOST'),
-        port: parseInt(config.get('DATABASE_PORT'), 10),
-        username: config.get('DATABASE_USER'),
-        password: config.get('DATABASE_PASSWORD'),
-        database: config.get('DATABASE_NAME'),
-        entities: [Client, Invoice],
-        synchronize: true, // só em desenvolvimento!
-      }),
-      inject: [ConfigService],
+      useClass: DataBaseConnectionService,
     }),
-    TypeOrmModule.forFeature([Client, Invoice]),
-    InvoicesModule,
-    ClientsModule,
-    DashBoardModule
+    ConfigModule.forRoot({ isGlobal: true }),
+    DatabaseModule,
+    ApplicationModule,
+    PresentationModule,
   ],
 })
 export class AppModule {}
