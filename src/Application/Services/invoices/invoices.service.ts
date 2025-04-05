@@ -40,10 +40,12 @@ export class InvoicesService {
 
       let client = await this.clientRepo.findByClientNumber(data.clientNumber);
 
+      console.log('Client:', data);
+
       if (!client) {
         client = await this.clientRepo.create(
           data.clientNumber,
-          `Cliente ${data.clientNumber}`,
+          data.clientName,
         );
       }
 
