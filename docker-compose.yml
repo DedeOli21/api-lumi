@@ -13,6 +13,35 @@ services:
       POSTGRES_DB: api_lumi_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U usuario -d api_lumi_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5 
+
+  app:
+    build: .
+    container_name: lumi-api
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_USER: usuario
+      DATABASE_PASSWORD: senha
+      DATABASE_NAME: api_lumi_db
+      NODE_ENV: development
+      TYPEORM_SYNCHRONIZE: true
+      TYPEORM_LOGGING: true
+      TYPEORM_AUTO_LOAD_ENTITIES: true
+      TYPEORM_ENTITIES: dist/**/*.entity.js
+      TYPEORM_MIGRATIONS: dist/**/migrations/*.js
+    command: ["node", "dist/main.js"]
+
 
 volumes:
   postgres_data:

@@ -9,22 +9,14 @@ describe('ClientsController', () => {
 
   const mockClients: ResponseClientDTO[] = [
     {
-      data: [
-        {
-          id: 1,
-          name: 'Client 1',
-          clientNumber: '001',
-        },
-      ],
+      id: 1,
+      name: 'Client 1',
+      clientNumber: '001',
     },
     {
-      data: [
-        {
-          id: 2,
-          name: 'Client 2',
-          clientNumber: '002',
-        },
-      ],
+      id: 2,
+      name: 'Client 2',
+      clientNumber: '002',
     },
   ];
 
