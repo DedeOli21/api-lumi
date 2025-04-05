@@ -1,16 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional } from 'class-validator';
+import { Client } from 'src/Domain/Entities/client.entity';
 
-export abstract class ResponseClientDTO {
-  @ApiProperty()
-  @IsOptional()
-  id: number;
-
-  @ApiProperty()
-  @IsOptional()
-  clientNumber: string;
-
-  @ApiProperty()
-  @IsOptional()
-  name: string;
-}
+export abstract class ResponseClientDTO extends Client { }

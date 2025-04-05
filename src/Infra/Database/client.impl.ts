@@ -15,7 +15,7 @@ export class ClientImpl implements IClientRepository {
 
     const query = this.clientRepository
       .createQueryBuilder('client')
-      .select(['client.clientNumber', 'client.name']);
+      .select(['client.clientNumber', 'client.name', 'client.id']);
 
     if (numberClient) {
       query.andWhere('client.clientNumber = :numberClient', { numberClient });

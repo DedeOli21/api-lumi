@@ -44,8 +44,6 @@ export class InvoicesController {
     }
 
     const filePath = path.resolve(invoice.pdfPath);
-
-    console.log('File path:', filePath);
     const fileName = `fatura-${invoice.monthReference}.pdf`;
 
     res.set({
@@ -60,7 +58,6 @@ export class InvoicesController {
   @Get('years')
   async findYears(): Promise<string[]> {
     const result = await this.invoicesService.getAvailableYears();
-    console.log('Available years:', result);
     return result.map((r) => r.monthReference);
   }
 

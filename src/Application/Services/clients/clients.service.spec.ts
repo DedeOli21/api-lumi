@@ -1,41 +1,50 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ClientsService } from './clients.service';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { Client } from 'src/Domain/Entities/client.entity';
+import { IClientRepository } from 'src/Domain/Interfaces/client.repositories';
+import { RequestClientDTO } from 'src/Presentation/DTOs/request-cliente.dto';
 
 describe('ClientsService', () => {
   let service: ClientsService;
-  let clientRepo: Repository<Client>;
+  let clientRepository: IClientRepository;
+
+  const mockClients = [
+    { id: 1, name: 'Client 1', invoices: [] },
+    { id: 2, name: 'Client 2', invoices: [] },
+  ];
+
+  const mockClientRepo = {
+    findAll: jest.fn().mockResolvedValue(mockClients),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ClientsService,
         {
-          provide: getRepositoryToken(Client),
-          useValue: {
-            find: jest.fn().mockResolvedValue([
-              { id: 1, name: 'Client 1' },
-              { id: 2, name: 'Client 2' },
-            ]),
-          },
+          provide: 'IClientRepository',
+          useValue: mockClientRepo,
         },
       ],
     }).compile();
 
     service = module.get<ClientsService>(ClientsService);
-    clientRepo = module.get<Repository<Client>>(getRepositoryToken(Client));
+    clientRepository = module.get<IClientRepository>('IClientRepository');
   });
 
-  describe('findAll', () => {
-    it('should return an array of clients', async () => {
-      const result = await service.findAllClient();
+  describe('findAllClient', () => {
+    it('should return an array of ResponseClientDTO', async () => {
+      const filters: RequestClientDTO = {};
+
+      const result = await service.findAllClient(filters);
+
       expect(result).toEqual([
-        { id: 1, name: 'Client 1' },
-        { id: 2, name: 'Client 2' },
+        { data: [mockClients[0]] },
+        { data: [mockClients[1]] },
       ]);
-      expect(clientRepo.find).toHaveBeenCalled();
+
+      expect(clientRepository.findAll).toHaveBeenCalledWith(filters);
+      expect(clientRepository.findAll).toHaveBeenCalledTimes(1);
     });
   });
 });

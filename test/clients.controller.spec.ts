@@ -1,10 +1,32 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ClientsService } from 'src/Application/Services/clients/clients.service';
 import { ClientsController } from 'src/Presentation/Controllers/clients.controller';
+import { ResponseClientDTO } from 'src/Presentation/DTOs/response-cliente.dto';
 
 describe('ClientsController', () => {
   let controller: ClientsController;
   let service: ClientsService;
+
+  const mockClients: ResponseClientDTO[] = [
+    {
+      data: [
+        {
+          id: 1,
+          name: 'Client 1',
+          clientNumber: '001',
+        },
+      ],
+    },
+    {
+      data: [
+        {
+          id: 2,
+          name: 'Client 2',
+          clientNumber: '002',
+        },
+      ],
+    },
+  ];
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -13,10 +35,7 @@ describe('ClientsController', () => {
         {
           provide: ClientsService,
           useValue: {
-            findAll: jest.fn().mockResolvedValue([
-              { id: 1, name: 'Client 1' },
-              { id: 2, name: 'Client 2' },
-            ]),
+            findAllClient: jest.fn().mockResolvedValue(mockClients),
           },
         },
       ],
@@ -32,12 +51,15 @@ describe('ClientsController', () => {
 
   describe('findAll', () => {
     it('should return an array of clients', async () => {
-      const result = await controller.findAll('1', 'Client 1');
-      expect(result).toEqual([
-        { id: 1, name: 'Client 1', invoices: [] },
-        { id: 2, name: 'Client 2', invoices: [] },
-      ]);
-      expect(service.findAllClient).toHaveBeenCalled();
+      const params = {
+        numberClient: '001',
+        clientName: 'Client 1',
+      };
+      const result = await controller.findAll(params.clientName, params.numberClient);
+
+      expect(result).toEqual(mockClients);
+      expect(service.findAllClient).toHaveBeenCalledWith({"clientName": "Client 1", "numberClient": "001"});
+      expect(service.findAllClient).toHaveBeenCalledTimes(1);
     });
   });
 });

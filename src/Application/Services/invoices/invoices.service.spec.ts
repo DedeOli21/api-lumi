@@ -1,57 +1,53 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { InvoicesService } from './invoices.service';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import pdf from 'pdf-parse';
-import { Repository } from 'typeorm';
-import { Client } from 'src/Domain/Entities/client.entity';
-import { Invoice } from 'src/Domain/Entities/invoice.entity';
 
 jest.mock('pdf-parse');
 
 describe('InvoicesService', () => {
   let service: InvoicesService;
-  let clientRepo: Repository<Client>;
-  let invoiceRepo: Repository<Invoice>;
 
   const mockClientRepo = {
-    findOne: jest.fn(),
+    findByClientNumber: jest.fn(),
     create: jest.fn(),
-    save: jest.fn(),
   };
 
   const mockInvoiceRepo = {
-    findOne: jest.fn(),
+    findById: jest.fn(),
+    findFiltered: jest.fn(),
+    getAvailableYears: jest.fn(),
+    getAvailableMonths: jest.fn(),
     create: jest.fn(),
-    save: jest.fn(),
-    createQueryBuilder: jest.fn(() => ({
-      select: jest.fn().mockReturnThis(),
-      where: jest.fn().mockReturnThis(),
-      andWhere: jest.fn().mockReturnThis(),
-      orderBy: jest.fn().mockReturnThis(),
-      getRawMany: jest.fn(),
-      getMany: jest.fn(),
-    })),
   };
 
   beforeEach(async () => {
+    (pdf as jest.Mock).mockResolvedValue({
+      text: `
+        1234567890 1234567890
+        Referente JAN/2023
+        Energia Elétrica kWh 100
+        Energia compensada GD I kWh 50
+        Energia Elétrica 100,00
+        Energia compensada GD I -50,00
+      `,
+    });
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InvoicesService,
         {
-          provide: getRepositoryToken(Client),
+          provide: 'IClientRepository',
           useValue: mockClientRepo,
         },
         {
-          provide: getRepositoryToken(Invoice),
+          provide: 'IInvoiceRepository',
           useValue: mockInvoiceRepo,
         },
       ],
     }).compile();
 
     service = module.get<InvoicesService>(InvoicesService);
-    clientRepo = module.get<Repository<Client>>(getRepositoryToken(Client));
-    invoiceRepo = module.get<Repository<Invoice>>(getRepositoryToken(Invoice));
   });
 
   it('should be defined', () => {
@@ -60,18 +56,7 @@ describe('InvoicesService', () => {
 
   describe('extractInvoiceData', () => {
     it('should extract invoice data from a valid PDF buffer', async () => {
-      const mockPdfBuffer = Buffer.from('mock-pdf');
-      const mockPdfText = `
-        1234567890 1234567890
-        Referente JAN/2023
-        Energia Elétrica kWh 100
-        Energia compensada GD I kWh 50
-        Energia Elétrica 100,00
-        Energia compensada GD I -50,00
-      `;
-      (pdf as jest.Mock).mockResolvedValue({ text: mockPdfText });
-
-      const result = await service.extractInvoiceData(mockPdfBuffer);
+      const result = await service.extractInvoiceData(Buffer.from('pdf'));
 
       expect(result).toEqual({
         clientNumber: '1234567890',
@@ -83,33 +68,17 @@ describe('InvoicesService', () => {
       });
     });
 
-    it('should throw BadRequestException for invalid PDF data', async () => {
-      const mockPdfBuffer = Buffer.from('mock-pdf');
+    it('should throw BadRequestException for invalid PDF', async () => {
       (pdf as jest.Mock).mockResolvedValue({ text: '' });
 
-      await expect(service.extractInvoiceData(mockPdfBuffer)).rejects.toThrow(
+      await expect(service.extractInvoiceData(Buffer.from('pdf'))).rejects.toThrow(
         BadRequestException,
       );
     });
   });
 
-  describe('findFiltered', () => {
-    it('should return filtered invoices', async () => {
-      const mockInvoices = [{ id: 1 }, { id: 2 }];
-      mockInvoiceRepo
-        .createQueryBuilder()
-        .getMany.mockResolvedValue(mockInvoices);
-
-      const result = await service.findFiltered(1, '01', '2023');
-
-      expect(result).toEqual(mockInvoices);
-      expect(mockInvoiceRepo.createQueryBuilder).toHaveBeenCalled();
-    });
-  });
-
   describe('processAndSaveInvoice', () => {
     it('should process and save an invoice', async () => {
-      const mockPdfBuffer = Buffer.from('mock-pdf');
       const mockInvoiceData = {
         clientNumber: '1234567890',
         monthReference: 'JAN/2023',
@@ -118,54 +87,98 @@ describe('InvoicesService', () => {
         totalValueWithoutGd: 100,
         gdEconomyValue: -50,
       };
+
       const mockClient = { id: 1, clientNumber: '1234567890' };
-      const mockInvoice = { id: 1, ...mockInvoiceData };
+      const mockInvoice = { id: 1, ...mockInvoiceData, clientId: 1, pdfPath: 'path' };
 
-      jest
-        .spyOn(service, 'extractInvoiceData')
-        .mockResolvedValue(mockInvoiceData);
-      mockClientRepo.findOne.mockResolvedValue(mockClient);
-      mockInvoiceRepo.create.mockReturnValue(mockInvoice);
-      mockInvoiceRepo.save.mockResolvedValue(mockInvoice);
+      jest.spyOn(service, 'extractInvoiceData').mockResolvedValue(mockInvoiceData);
+      mockClientRepo.findByClientNumber.mockResolvedValue(mockClient);
+      mockInvoiceRepo.create.mockResolvedValue(mockInvoice);
 
-      const result = await service.processAndSaveInvoice(mockPdfBuffer);
+      const result = await service.processAndSaveInvoice(Buffer.from('pdf'));
 
       expect(result).toEqual(mockInvoice);
-      expect(service.extractInvoiceData).toHaveBeenCalledWith(mockPdfBuffer);
-      expect(mockClientRepo.findOne).toHaveBeenCalledWith({
-        where: { clientNumber: '1234567890' },
-      });
-      expect(mockInvoiceRepo.create).toHaveBeenCalledWith({
+      expect(mockClientRepo.findByClientNumber).toHaveBeenCalledWith('1234567890');
+      expect(mockInvoiceRepo.create).toHaveBeenCalledWith(expect.objectContaining({
         ...mockInvoiceData,
-        clientId: mockClient.id,
+        clientId: 1,
         pdfPath: expect.any(String),
-      });
-      expect(mockInvoiceRepo.save).toHaveBeenCalledWith(mockInvoice);
+      }));
     });
 
-    it('should throw BadRequestException for invalid PDF processing', async () => {
-      const mockPdfBuffer = Buffer.from('mock-pdf');
-      jest
-        .spyOn(service, 'extractInvoiceData')
-        .mockRejectedValue(new BadRequestException());
+    it('should throw BadRequestException when processing fails', async () => {
+      jest.spyOn(service, 'extractInvoiceData').mockRejectedValue(new Error('fail'));
 
-      await expect(
-        service.processAndSaveInvoice(mockPdfBuffer),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.processAndSaveInvoice(Buffer.from('pdf'))).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
   describe('findOne', () => {
-    it('should return an invoice if found', async () => {
-      const mockInvoice = { id: 1, pdfPath: 'path/to/pdf' };
-      mockInvoiceRepo.findOne.mockResolvedValue(mockInvoice);
+    it('should return invoice if found and has pdfPath', async () => {
+      const invoice = { id: 1, pdfPath: 'path/to/file.pdf' };
+      mockInvoiceRepo.findById.mockResolvedValue(invoice);
 
       const result = await service.findOne(1);
+      expect(result).toEqual(invoice);
+    });
 
-      expect(result).toEqual(mockInvoice);
-      expect(mockInvoiceRepo.findOne).toHaveBeenCalledWith({
-        where: { id: 1 },
-      });
+    it('should throw NotFoundException if invoice is not found', async () => {
+      mockInvoiceRepo.findById.mockResolvedValue(undefined);
+
+      await expect(service.findOne(1)).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw NotFoundException if pdfPath is missing', async () => {
+      mockInvoiceRepo.findById.mockResolvedValue({ id: 1 });
+
+      await expect(service.findOne(1)).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('findFiltered', () => {
+    it('should return filtered invoices', async () => {
+      const invoices = [{ id: 1 }, { id: 2 }];
+      mockInvoiceRepo.findFiltered.mockResolvedValue(invoices);
+
+      const result = await service.findFiltered(1, '01', '2023');
+
+      expect(result).toEqual(invoices);
+      expect(mockInvoiceRepo.findFiltered).toHaveBeenCalledWith(1, '01', '2023');
+    });
+  });
+
+  describe('getAvailableYears', () => {
+    it('should return available years', async () => {
+      const years = [2022, 2023];
+      mockInvoiceRepo.getAvailableYears.mockResolvedValue(years);
+
+      const result = await service.getAvailableYears();
+
+      expect(result).toEqual(years);
+    });
+  });
+
+  describe('getAvailableMonths', () => {
+    it('should return available months with clientId', async () => {
+      const months = ['01', '02'];
+      mockInvoiceRepo.getAvailableMonths.mockResolvedValue(months);
+
+      const result = await service.getAvailableMonths('2023', 1);
+
+      expect(result).toEqual(months);
+      expect(mockInvoiceRepo.getAvailableMonths).toHaveBeenCalledWith('2023', 1);
+    });
+
+    it('should return available months without clientId', async () => {
+      const months = ['03', '04'];
+      mockInvoiceRepo.getAvailableMonths.mockResolvedValue(months);
+
+      const result = await service.getAvailableMonths('2023');
+
+      expect(result).toEqual(months);
+      expect(mockInvoiceRepo.getAvailableMonths).toHaveBeenCalledWith('2023', undefined);
     });
   });
 });

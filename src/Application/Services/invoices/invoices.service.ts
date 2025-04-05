@@ -22,7 +22,7 @@ export class InvoicesService {
 
   async extractInvoiceData(fileBuffer: Buffer): Promise<InvoiceData> {
     const data = await pdf(fileBuffer);
-
+    console.log('PDF data:', data);
     const text = data.text;
 
     try {

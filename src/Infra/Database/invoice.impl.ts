@@ -25,7 +25,7 @@ export class InvoiceImpl implements IInvoiceRepository {
       .where('invoice.monthReference LIKE :year', { year: `%/${year}` });
 
     if (clientId) {
-      query.andWhere('invoice.clientId = :clientId', { clientId });
+      query.andWhere('invoice.clientId = :clientId', { clientId: Number(clientId) });
     }
 
     return await query

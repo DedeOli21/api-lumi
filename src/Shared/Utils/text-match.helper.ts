@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 export function extractInvoiceDataFromText(text: string): InvoiceData {
+  console.log('Texto extraído do PDF:', text);
   const clientNumber = text.match(/(\d{10})\s+\d{10}/)?.[1];
   const monthReference = text.match(
     /Referente[\s\S]*?\b([A-Z]{3}\/\d{4})\b/,
@@ -12,39 +13,45 @@ export function extractInvoiceDataFromText(text: string): InvoiceData {
     text.match(/Energia Elétrica.*?kWh\s+(\d+)/i)?.[1] || 0,
   );
   const energySceeeKwh = Number(
-    text.match(/Energia SCEE s\/ ICMS.*?kWh\s+(\d+)/i)?.[1] || 0,
-  );
+    text.match(/Energia SCEE s\/ ICMSkWh\s+([\d.,]+)/i)?.[1]
+      ?.replace('.', '')     // remove separador de milhar
+      ?.replace(',', '.')    // converte vírgula decimal
+  ) || 0;
+
+  console.log('Energia Elétrica kWh:', energyElectricKwh);
+  console.log('Energia SCEE kWh:', energySceeeKwh);
+
   const energyCompensatedKwh = Number(
-    text.match(/Energia compensada GD I.*?kWh\s+(\d+)/i)?.[1] || 0,
-  );
+    text.match(/Energia compensada GD I.*?kWh\s+([\d.,]+)/i)?.[1]
+      ?.replace(/\./g, '')    // remove separadores de milhar
+      ?.replace(',', '.')     // converte vírgula decimal
+  ) || 0;
+
+  console.log('Energia Compensada kWh:', energyCompensatedKwh);
 
   const energyElectricValue = Number(
-    text
-      .match(/Energia Elétrica.*?([\d.,-]+)\s*$/im)?.[1]
-      ?.replace('.', '')
-      .replace(',', '.') || '0',
-  );
+    text.match(/Energia Elétrica.*?kWh\s+[\d.,]+\s+[\d.,]+\s+([\d.,-]+)/i)?.[1]
+      ?.replace(/\./g, '')
+      ?.replace(',', '.')
+  ) || 0;
 
   const energySceeeValue = Number(
-    text
-      .match(/Energia SCEE s\/ ICMS.*?([\d.,-]+)\s*$/im)?.[1]
-      ?.replace('.', '')
-      .replace(',', '.') || '0',
-  );
+    text.match(/Energia SCEE s\/ ICMS.*?kWh\s+[\d.,]+\s+[\d.,]+\s+([\d.,-]+)/i)?.[1]
+      ?.replace(/\./g, '')
+      ?.replace(',', '.')
+  ) || 0;
 
   const ilumPublicValue = Number(
-    text
-      .match(/Contrib Ilum Publica Municipal\s+([\d.,]+)/i)?.[1]
-      ?.replace('.', '')
-      .replace(',', '.') || '0',
-  );
+    text.match(/Contrib Ilum Publica Municipal\s+([\d.,-]+)/i)?.[1]
+      ?.replace(/\./g, '')
+      ?.replace(',', '.')
+  ) || 0
 
-  const gdEconomyValue = Number(
-    text
-      .match(/Energia compensada GD I.*?(-?[\d.,]+)\s*$/im)?.[1]
-      ?.replace('.', '')
-      .replace(',', '.') || '0',
-  );
+  const gdEconomyValue = Math.abs(Number(
+    text.match(/Energia compensada GD I\s?kWh\s+[\d.,]+\s+[\d.,]+\s+([-\d.,]+)/i)?.[1]
+      ?.replace(/\./g, '')
+      ?.replace(',', '.')
+  )) || 0;
 
   if (!clientNumber) throw new Error('clientNumber não encontrado');
   if (!monthReference) throw new Error('monthReference não encontrado');
@@ -52,6 +59,10 @@ export function extractInvoiceDataFromText(text: string): InvoiceData {
   const energyConsumptionKwh = energyElectricKwh + energySceeeKwh;
   const totalValueWithoutGd =
     energyElectricValue + energySceeeValue + ilumPublicValue;
+
+  console.log('Valores Faturados:', [
+    energyElectricValue,energySceeeValue,ilumPublicValue
+  ]);
 
   return {
     clientNumber,

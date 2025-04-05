@@ -13,5 +13,5 @@ export class Client {
   name: string;
 
   @OneToMany(() => Invoice, (invoice) => invoice.client)
-  invoices: Invoice[];
+  invoices?: Invoice[];
 }
