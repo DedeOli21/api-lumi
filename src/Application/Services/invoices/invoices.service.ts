@@ -11,7 +11,7 @@ import { Invoice } from 'src/Domain/Entities/invoice.entity';
 import {
   extractInvoiceDataFromText,
   saveInvoicePdf,
-} from 'src/Shared/Utils/text-match.helper';
+} from 'src/Shared/Utils/pdf.helper';
 
 @Injectable()
 export class InvoicesService {
@@ -22,7 +22,6 @@ export class InvoicesService {
 
   async extractInvoiceData(fileBuffer: Buffer): Promise<InvoiceData> {
     const data = await pdf(fileBuffer);
-    console.log('PDF data:', data);
     const text = data.text;
 
     try {
@@ -87,11 +86,13 @@ export class InvoicesService {
     return this.invoiceRepo.findFiltered(clientId, month, year);
   }
 
-  async getAvailableYears(): Promise<any> {
+  async getAvailableYears(): Promise<Array<{ monthReference: string }>> {
+    const result = await this.invoiceRepo.getAvailableYears();
     return this.invoiceRepo.getAvailableYears();
   }
 
-  async getAvailableMonths(year: string, clientId?: number): Promise<any> {
+  async getAvailableMonths(year: string, clientId?: number): Promise<Array<{ monthReference: string }>> {
+    const result = await this.invoiceRepo.getAvailableMonths(year, clientId);
     return this.invoiceRepo.getAvailableMonths(year, clientId);
   }
 }

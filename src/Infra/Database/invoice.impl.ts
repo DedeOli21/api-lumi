@@ -1,6 +1,7 @@
 import { InjectRepository } from '@nestjs/typeorm';
 import { Invoice } from 'src/Domain/Entities/invoice.entity';
 import { IInvoiceRepository } from 'src/Domain/Interfaces/invoice.repositories';
+import { createInvoiceDTO } from 'src/Presentation/DTOs/create-invoice.dto';
 import { getMonthName } from 'src/Shared/Utils/get-month.helpert';
 import { Repository } from 'typeorm';
 
@@ -44,7 +45,7 @@ export class InvoiceImpl implements IInvoiceRepository {
     });
   }
 
-  create(invoice: any): Promise<Invoice[]> {
+  create(invoice: createInvoiceDTO): Promise<Invoice> {
     const result = this.invoiceRepo.create(invoice);
 
     return this.invoiceRepo.save(result);
