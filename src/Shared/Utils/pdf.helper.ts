@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 export function extractInvoiceDataFromText(text: string): InvoiceData {
+  console.log('Texto extraído do PDF:', text);
   const clientNumber = text.match(/(\d{10})\s+\d{10}/)?.[1];
   const clientName = text.match(/([A-ZÁÉÍÓÚÃÕÇ0-9 ]{5,})\s+(RUA|AV|AL)\b/)?.[1]?.trim();
   const monthReference = text.match(
