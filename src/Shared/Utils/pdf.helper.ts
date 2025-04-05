@@ -3,9 +3,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 export function extractInvoiceDataFromText(text: string): InvoiceData {
-  console.log('Texto extraído do PDF:', text);
   const clientNumber = text.match(/(\d{10})\s+\d{10}/)?.[1];
-  const clientName = text.match(/([A-ZÁÉÍÓÚÃÕÇ ]{5,})\s+\d{8}\s+RUA/)?.[1];
+  const clientName = text.match(/([A-ZÁÉÍÓÚÃÕÇ0-9 ]{5,})\s+(RUA|AV|AL)\b/)?.[1]?.trim();
   const monthReference = text.match(
     /Referente[\s\S]*?\b([A-Z]{3}\/\d{4})\b/,
   )?.[1];
@@ -19,16 +18,11 @@ export function extractInvoiceDataFromText(text: string): InvoiceData {
       ?.replace(',', '.')    // converte vírgula decimal
   ) || 0;
 
-  console.log('Energia Elétrica kWh:', energyElectricKwh);
-  console.log('Energia SCEE kWh:', energySceeeKwh);
-
   const energyCompensatedKwh = Number(
     text.match(/Energia compensada GD I.*?kWh\s+([\d.,]+)/i)?.[1]
       ?.replace(/\./g, '')    // remove separadores de milhar
       ?.replace(',', '.')     // converte vírgula decimal
   ) || 0;
-
-  console.log('Energia Compensada kWh:', energyCompensatedKwh);
 
   const energyElectricValue = Number(
     text.match(/Energia Elétrica.*?kWh\s+[\d.,]+\s+[\d.,]+\s+([\d.,-]+)/i)?.[1]
@@ -60,10 +54,6 @@ export function extractInvoiceDataFromText(text: string): InvoiceData {
   const energyConsumptionKwh = energyElectricKwh + energySceeeKwh;
   const totalValueWithoutGd =
     energyElectricValue + energySceeeValue + ilumPublicValue;
-
-  console.log('Valores Faturados:', [
-    energyElectricValue,energySceeeValue,ilumPublicValue
-  ]);
 
   return {
     clientNumber,
