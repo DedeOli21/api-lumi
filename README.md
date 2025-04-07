@@ -45,6 +45,8 @@ npm run start:dev
 - Conecte o repositório e aguarde build/deploy automático
 - Verifique a URL gerada (ex: `https://api-lumi.up.railway.app`)
 
+PS: o download de faturas esta com um problema em PRD, proximas feat visam corrigir esse BUG.
+
 ## ✅ Rodando os Testes
 
 ```bash
